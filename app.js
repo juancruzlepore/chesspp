@@ -134,6 +134,14 @@ const PIECE_SETS = [
     promotionType: "q",
     pieces: createBureaucratPieceDefinitions(),
     layout: createBureaucratLayout()
+  },
+  {
+    id: "racing-pawns",
+    name: "Racing Pawns",
+    description: "Pawns may always advance one or two squares forward when unobstructed.",
+    promotionType: "q",
+    pieces: createRacingPawnPieceDefinitions(),
+    layout: createClassicLayout()
   }
 ];
 
@@ -263,6 +271,18 @@ function createBureaucratPieceDefinitions() {
     render: { kind: "sprite", code: "u" },
     movement: { anyEmptySquare: true },
     traits: { redeployable: true }
+  };
+  return pieces;
+}
+
+function createRacingPawnPieceDefinitions() {
+  const pieces = createClassicPieceDefinitions();
+  pieces.p = {
+    ...pieces.p,
+    movement: {
+      ...pieces.p.movement,
+      startRows: [0, 1, 2, 3, 4, 5, 6, 7]
+    }
   };
   return pieces;
 }
