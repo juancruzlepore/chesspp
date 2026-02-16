@@ -20,7 +20,9 @@
     </header>
 
     <section class="board-wrap">
+      <div id="reserve-black" class="reserve reserve-black" aria-label="Black reserve"></div>
       <div id="board" class="board" aria-label="Chess board"></div>
+      <div id="reserve-white" class="reserve reserve-white" aria-label="White reserve"></div>
     </section>
 
     <section class="piece-sets" aria-label="Piece set selectors">
@@ -55,7 +57,7 @@
     </section>
 
     <p id="status" class="status" aria-live="polite"></p>
-    <p class="hint">How to move: tap a piece and tap the destination, or drag and drop.</p>
+    <p class="hint">How to move: tap a piece and tap the destination, or drag and drop. Reserve pieces can be tapped, then placed on any legal square.</p>
   </main>
 
   <script src="./app.js"></script>

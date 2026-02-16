@@ -18,7 +18,7 @@ const PIECE_TILE_MAP = {
 };
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-const SPRITE_SHEET = { columns: 8, rows: 4 };
+const SPRITE_SHEET = { columns: 7, rows: 4 };
 
 const KNIGHT_LEAPS = [
   [-2, -1],
@@ -124,10 +124,20 @@ const PIECE_SETS = [
     promotionType: "q",
     pieces: createOverknightPieceDefinitions(),
     layout: createClassicLayout()
+  },
+  {
+    id: "bureaucrat",
+    name: "The Bureaucrat",
+    description: "Adds a redeployable bureaucrat that moves to any empty square and cannot capture.",
+    promotionType: "q",
+    pieces: createBureaucratPieceDefinitions(),
+    layout: createBureaucratLayout()
   }
 ];
 
 const boardEl = document.querySelector("#board");
+const reserveBlackEl = document.querySelector("#reserve-black");
+const reserveWhiteEl = document.querySelector("#reserve-white");
 const statusEl = document.querySelector("#status");
 const blackClockEl = document.querySelector("#clock-black");
 const whiteClockEl = document.querySelector("#clock-white");
@@ -150,6 +160,7 @@ const customPieceImageCache = new Map();
 let gameState = createInitialGameState();
 let gameStarted = false;
 let selectedSquare = null;
+let selectedReserve = null;
 let legalTargets = [];
 let legalCaptureTargets = [];
 let lastMove = null;
@@ -243,11 +254,30 @@ function createOverknightPieceDefinitions() {
   return pieces;
 }
 
+function createBureaucratPieceDefinitions() {
+  const pieces = createClassicPieceDefinitions();
+  pieces.u = {
+    name: "Bureaucrat",
+    render: { kind: "sprite", code: "o" },
+    movement: { anyEmptySquare: true },
+    traits: { redeployable: true }
+  };
+  return pieces;
+}
+
 function createClassicLayout() {
   const backRank = ["r", "n", "b", "q", "k", "b", "n", "r"];
   return {
     w: [...createRankLayout(1, backRank), ...createFilledRankLayout(2, "p")],
     b: [...createRankLayout(8, backRank), ...createFilledRankLayout(7, "p")]
+  };
+}
+
+function createBureaucratLayout() {
+  const classic = createClassicLayout();
+  return {
+    w: [...classic.w, { type: "u", square: "a3" }],
+    b: [...classic.b, { type: "u", square: "h6" }]
   };
 }
 
@@ -391,6 +421,7 @@ function createInitialGameState() {
   const board = createInitialBoard();
   return {
     board,
+    reserves: { w: [], b: [] },
     turn: "w",
     castling: computeInitialCastlingRights(board),
     enPassant: null,
@@ -402,6 +433,10 @@ function createInitialGameState() {
 function cloneGameState(state) {
   return {
     board: state.board.map((piece) => (piece ? { ...piece } : null)),
+    reserves: {
+      w: state.reserves.w.map((piece) => ({ ...piece })),
+      b: state.reserves.b.map((piece) => ({ ...piece }))
+    },
     turn: state.turn,
     castling: { ...state.castling },
     enPassant: state.enPassant,
@@ -505,6 +540,53 @@ function renderBoard() {
   }
 }
 
+function renderReserveForColor(color, containerEl) {
+  if (!containerEl) {
+    return;
+  }
+
+  containerEl.innerHTML = "";
+
+  const labelEl = document.createElement("p");
+  labelEl.className = "reserve-label";
+  labelEl.textContent = `${colorName(color)} reserve`;
+  containerEl.append(labelEl);
+
+  const trayEl = document.createElement("div");
+  trayEl.className = "reserve-tray";
+
+  const reservePieces = gameState.reserves[color] || [];
+  if (reservePieces.length === 0) {
+    const emptyEl = document.createElement("span");
+    emptyEl.className = "reserve-empty";
+    emptyEl.textContent = "empty";
+    trayEl.append(emptyEl);
+  } else {
+    reservePieces.forEach((piece, index) => {
+      const pieceName = getPieceDefinition(piece.color, piece.type)?.name || piece.type;
+      const buttonEl = document.createElement("button");
+      buttonEl.className = "reserve-piece";
+      buttonEl.type = "button";
+      buttonEl.dataset.color = color;
+      buttonEl.dataset.index = String(index);
+      buttonEl.setAttribute("aria-label", `${colorName(color)} ${pieceName} in reserve`);
+      if (selectedReserve && selectedReserve.color === color && selectedReserve.index === index) {
+        buttonEl.classList.add("reserve-piece-selected");
+      }
+
+      buttonEl.append(buildPieceEl(piece));
+      trayEl.append(buttonEl);
+    });
+  }
+
+  containerEl.append(trayEl);
+}
+
+function renderReserves() {
+  renderReserveForColor("b", reserveBlackEl);
+  renderReserveForColor("w", reserveWhiteEl);
+}
+
 function renderStatus() {
   statusEl.textContent = statusMessage;
 }
@@ -590,6 +672,7 @@ function markGameStarted() {
 
 function clearSelection() {
   selectedSquare = null;
+  selectedReserve = null;
   legalTargets = [];
   legalCaptureTargets = [];
 }
@@ -602,11 +685,70 @@ function selectSquare(square) {
   }
 
   selectedSquare = square;
+  selectedReserve = null;
   const legalMoves = getLegalMovesForSquare(square, gameState);
   legalTargets = legalMoves.map((move) => move.to);
   legalCaptureTargets = legalMoves
     .filter((move) => Boolean(move.capturedPiece))
     .map((move) => move.to);
+}
+
+function generatePseudoReserveMoves(piece, color, reserveIndex, state) {
+  if (!piece || piece.color !== color) {
+    return [];
+  }
+
+  const pieceDef = getPieceDefinition(color, piece.type);
+  if (!pieceDef?.movement?.anyEmptySquare) {
+    return [];
+  }
+
+  const moves = [];
+  for (let to = 0; to < 64; to += 1) {
+    if (state.board[to]) {
+      continue;
+    }
+    moves.push({
+      fromReserve: true,
+      reserveColor: color,
+      reserveIndex,
+      piece: { ...piece },
+      to
+    });
+  }
+  return moves;
+}
+
+function getLegalMovesForReservePiece(color, reserveIndex, state) {
+  if (color !== state.turn) {
+    return [];
+  }
+  const reservePieces = state.reserves[color] || [];
+  const piece = reservePieces[reserveIndex];
+  if (!piece) {
+    return [];
+  }
+  const pseudoMoves = generatePseudoReserveMoves(piece, color, reserveIndex, state);
+  return pseudoMoves.filter((move) => isMoveLegal(move, color, state));
+}
+
+function selectReservePiece(color, reserveIndex) {
+  if (gameState.gameOver || color !== gameState.turn) {
+    clearSelection();
+    return;
+  }
+
+  const reservePieces = gameState.reserves[color] || [];
+  if (!reservePieces[reserveIndex]) {
+    clearSelection();
+    return;
+  }
+
+  selectedSquare = null;
+  selectedReserve = { color, index: reserveIndex };
+  const legalMoves = getLegalMovesForReservePiece(color, reserveIndex, gameState);
+  legalTargets = legalMoves.map((move) => move.to);
+  legalCaptureTargets = [];
 }
 
 function consumeActiveClock() {
@@ -632,6 +774,7 @@ function handleTimeout(loserColor) {
   statusMessage = `${colorName(gameState.winner)} wins on time.`;
   clearSelection();
   renderBoard();
+  renderReserves();
   renderStatus();
   renderControls();
 }
@@ -693,6 +836,7 @@ function commitMove(move) {
 
   setStatusFromPosition();
   renderBoard();
+  renderReserves();
   renderStatus();
   renderControls();
   return true;
@@ -703,6 +847,18 @@ function tryMove(from, to) {
     return false;
   }
   const legalMoves = getLegalMovesForSquare(from, gameState);
+  const selectedMove = legalMoves.find((move) => move.to === to);
+  if (!selectedMove) {
+    return false;
+  }
+  return commitMove(selectedMove);
+}
+
+function tryReserveMove(color, reserveIndex, to) {
+  if (to == null) {
+    return false;
+  }
+  const legalMoves = getLegalMovesForReservePiece(color, reserveIndex, gameState);
   const selectedMove = legalMoves.find((move) => move.to === to);
   if (!selectedMove) {
     return false;
@@ -768,17 +924,34 @@ function onBoardClick(event) {
   const square = Number(squareEl.dataset.square);
   const piece = gameState.board[square];
 
-  if (selectedSquare == null) {
+  if (selectedSquare == null && !selectedReserve) {
     if (piece && piece.color === gameState.turn) {
       selectSquare(square);
       renderBoard();
+      renderReserves();
     }
+    return;
+  }
+
+  if (selectedReserve) {
+    if (tryReserveMove(selectedReserve.color, selectedReserve.index, square)) {
+      return;
+    }
+
+    if (piece && piece.color === gameState.turn) {
+      selectSquare(square);
+    } else {
+      clearSelection();
+    }
+    renderBoard();
+    renderReserves();
     return;
   }
 
   if (square === selectedSquare) {
     clearSelection();
     renderBoard();
+    renderReserves();
     return;
   }
 
@@ -792,6 +965,29 @@ function onBoardClick(event) {
     clearSelection();
   }
   renderBoard();
+  renderReserves();
+}
+
+function onReserveClick(event) {
+  const reservePieceEl = event.target.closest(".reserve-piece");
+  if (!reservePieceEl || gameState.gameOver) {
+    return;
+  }
+
+  const color = reservePieceEl.dataset.color;
+  const index = Number(reservePieceEl.dataset.index);
+  if (!color || !Number.isInteger(index)) {
+    return;
+  }
+
+  if (selectedReserve && selectedReserve.color === color && selectedReserve.index === index) {
+    clearSelection();
+  } else {
+    selectReservePiece(color, index);
+  }
+
+  renderBoard();
+  renderReserves();
 }
 
 function onPointerDown(event) {
@@ -835,6 +1031,7 @@ function onPointerMove(event) {
     }
     dragState.ghostEl = createDragGhost(dragState.pieceRef, event.clientX, event.clientY);
     renderBoard();
+    renderReserves();
   }
 
   if (dragState.moved) {
@@ -858,6 +1055,7 @@ function onPointerUp(event) {
   clearDragState();
   if (didDrag) {
     renderBoard();
+    renderReserves();
   }
 }
 
@@ -869,6 +1067,7 @@ function onPointerCancel(event) {
   clearDragState();
   if (didDrag) {
     renderBoard();
+    renderReserves();
   }
 }
 
@@ -917,6 +1116,7 @@ function resetGame() {
   gameState = createInitialGameState();
   gameStarted = false;
   selectedSquare = null;
+  selectedReserve = null;
   legalTargets = [];
   legalCaptureTargets = [];
   lastMove = null;
@@ -932,6 +1132,7 @@ function resetGame() {
 
   statusMessage = "White to move.";
   renderBoard();
+  renderReserves();
   renderStatus();
   renderClocks();
   renderControls();
@@ -1146,6 +1347,14 @@ function generatePseudoMoves(square, state, options = {}) {
     }
   }
 
+  if (!attacksOnly && movement.anyEmptySquare) {
+    for (let to = 0; to < 64; to += 1) {
+      if (!state.board[to]) {
+        addMove(to);
+      }
+    }
+  }
+
   if (Array.isArray(movement.leaps) && movement.leaps.length > 0) {
     addLeaperMoves(movement.leaps);
   }
@@ -1216,6 +1425,22 @@ function clearCastlingRookRightBySquare(state, color, square) {
 }
 
 function applyMoveToState(state, move) {
+  if (move.fromReserve) {
+    const reservePieces = state.reserves[move.reserveColor];
+    if (!reservePieces || !reservePieces[move.reserveIndex]) {
+      return;
+    }
+    if (state.board[move.to]) {
+      return;
+    }
+    const piece = reservePieces[move.reserveIndex];
+    reservePieces.splice(move.reserveIndex, 1);
+    state.board[move.to] = { ...piece };
+    state.enPassant = null;
+    state.turn = oppositeColor(state.turn);
+    return;
+  }
+
   const piece = state.board[move.from];
   if (!piece) {
     return;
@@ -1245,6 +1470,9 @@ function applyMoveToState(state, move) {
   }
 
   const captured = move.capturedPiece || null;
+  if (captured && pieceHasTrait(captured, "redeployable")) {
+    state.reserves[captured.color].push({ ...captured });
+  }
   if (captured && pieceHasTrait(captured, "castlingRook")) {
     clearCastlingRookRightBySquare(state, captured.color, move.to);
   }
@@ -1323,10 +1551,26 @@ function getAllLegalMoves(color, state) {
       }
     }
   }
+
+  const reservePieces = state.reserves[color] || [];
+  for (let i = 0; i < reservePieces.length; i += 1) {
+    const pseudoMoves = generatePseudoReserveMoves(reservePieces[i], color, i, state);
+    for (const move of pseudoMoves) {
+      if (isMoveLegal(move, color, state)) {
+        allMoves.push(move);
+      }
+    }
+  }
   return allMoves;
 }
 
 boardEl.addEventListener("click", onBoardClick);
+if (reserveBlackEl) {
+  reserveBlackEl.addEventListener("click", onReserveClick);
+}
+if (reserveWhiteEl) {
+  reserveWhiteEl.addEventListener("click", onReserveClick);
+}
 boardEl.addEventListener("pointerdown", onPointerDown);
 window.addEventListener("pointermove", onPointerMove, { passive: true });
 window.addEventListener("pointerup", onPointerUp, { passive: true });

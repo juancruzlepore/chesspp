@@ -1,8 +1,8 @@
 {
   "meta": {
-    "tileWidth": 192,
-    "tileHeight": 256,
-    "columns": 8,
+    "tileWidth": 204,
+    "tileHeight": 248,
+    "columns": 7,
     "rows": 4,
     "file": "tileset.png"
   },
