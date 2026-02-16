@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "tileWidth": 192,
+    "tileHeight": 256,
+    "columns": 8,
+    "rows": 4,
+    "file": "tileset.png"
+  },
+  "tiles": {
+    "wk": { "x": 0, "y": 0, "name": "white-king" },
+    "wq": { "x": 1, "y": 0, "name": "white-queen" },
+    "wb": { "x": 2, "y": 0, "name": "white-bishop" },
+    "wn": { "x": 3, "y": 0, "name": "white-knight" },
+    "wr": { "x": 4, "y": 0, "name": "white-rook" },
+    "wp": { "x": 5, "y": 0, "name": "white-pawn" },
+    "wo": { "x": 6, "y": 0, "name": "white-overknight" },
+    "bk": { "x": 0, "y": 1, "name": "black-king" },
+    "bq": { "x": 1, "y": 1, "name": "black-queen" },
+    "bb": { "x": 2, "y": 1, "name": "black-bishop" },
+    "bn": { "x": 3, "y": 1, "name": "black-knight" },
+    "br": { "x": 4, "y": 1, "name": "black-rook" },
+    "bp": { "x": 5, "y": 1, "name": "black-pawn" },
+    "bo": { "x": 6, "y": 1, "name": "black-overknight" }
+  }
+}

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="576" height="192" viewBox="0 0 576 192">
+  <rect width="576" height="192" fill="none"/>
+
+  <g
+    font-family="'Noto Sans Symbols 2','Segoe UI Symbol','Apple Symbols','Arial Unicode MS',serif"
+    font-size="78"
+    font-weight="700"
+    text-anchor="middle"
+    letter-spacing="0">
+    <g fill="#f4efe4" stroke="#1f2d3d" stroke-width="3.2" paint-order="stroke fill">
+      <text x="48" y="72">♙</text>
+      <text x="144" y="72">♘</text>
+      <text x="240" y="72">♗</text>
+      <text x="336" y="72">♖</text>
+      <text x="432" y="72">♕</text>
+      <text x="528" y="72">♔</text>
+    </g>
+
+    <g fill="#1f2d3d" stroke="#f2f8ff" stroke-width="3.2" paint-order="stroke fill">
+      <text x="48" y="168">♟</text>
+      <text x="144" y="168">♞</text>
+      <text x="240" y="168">♝</text>
+      <text x="336" y="168">♜</text>
+      <text x="432" y="168">♛</text>
+      <text x="528" y="168">♚</text>
+    </g>
+  </g>
+</svg>

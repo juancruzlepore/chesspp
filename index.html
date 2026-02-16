@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chess++</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="top-bar">
+      <div>
+        <h1>Chess++</h1>
+        <p>Tap-to-move and drag/drop on one screen.</p>
+      </div>
+      <section class="timers" aria-label="Chess clocks">
+        <div class="clock clock-black" id="clock-black" role="timer" aria-live="polite">10:00</div>
+        <div class="clock clock-white" id="clock-white" role="timer" aria-live="polite">10:00</div>
+      </section>
+    </header>
+
+    <section class="board-wrap">
+      <div id="board" class="board" aria-label="Chess board"></div>
+    </section>
+
+    <section class="piece-sets" aria-label="Piece set selectors">
+      <div class="piece-set-selector" aria-live="polite">
+        <span class="piece-set-color">White pieces</span>
+        <button id="white-set-prev" class="piece-set-arrow" type="button" aria-label="Previous white piece set">◀</button>
+        <span id="white-set-name" class="piece-set-name">Classic</span>
+        <button id="white-set-next" class="piece-set-arrow" type="button" aria-label="Next white piece set">▶</button>
+        <p id="white-set-description" class="piece-set-description">Standard chess movement for every piece.</p>
+      </div>
+      <div class="piece-set-selector" aria-live="polite">
+        <span class="piece-set-color">Black pieces</span>
+        <button id="black-set-prev" class="piece-set-arrow" type="button" aria-label="Previous black piece set">◀</button>
+        <span id="black-set-name" class="piece-set-name">Classic</span>
+        <button id="black-set-next" class="piece-set-arrow" type="button" aria-label="Next black piece set">▶</button>
+        <p id="black-set-description" class="piece-set-description">Standard chess movement for every piece.</p>
+      </div>
+    </section>
+    <p class="piece-set-hint">Piece-sets lock after the first move or when the clock starts.</p>
+
+    <section class="controls" aria-label="Game controls">
+      <label>
+        Base (minutes)
+        <input id="base-minutes" type="number" min="1" max="180" value="10" inputmode="numeric">
+      </label>
+      <label>
+        Increment (seconds)
+        <input id="increment-seconds" type="number" min="0" max="60" value="5" inputmode="numeric">
+      </label>
+      <button id="toggle-clock" type="button">Start Clock</button>
+      <button id="new-game" type="button">New Game</button>
+    </section>
+
+    <p id="status" class="status" aria-live="polite"></p>
+    <p class="hint">How to move: tap a piece and tap the destination, or drag and drop.</p>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
