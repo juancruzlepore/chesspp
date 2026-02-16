@@ -8,13 +8,15 @@ const PIECE_TILE_MAP = {
   wr: { x: 4, y: 0 },
   wp: { x: 5, y: 0 },
   wo: { x: 6, y: 0 },
+  wu: { x: 0, y: 3 },
   bk: { x: 0, y: 1 },
   bq: { x: 1, y: 1 },
   bb: { x: 2, y: 1 },
   bn: { x: 3, y: 1 },
   br: { x: 4, y: 1 },
   bp: { x: 5, y: 1 },
-  bo: { x: 6, y: 1 }
+  bo: { x: 6, y: 1 },
+  bu: { x: 0, y: 2 }
 };
 
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -258,7 +260,7 @@ function createBureaucratPieceDefinitions() {
   const pieces = createClassicPieceDefinitions();
   pieces.u = {
     name: "Bureaucrat",
-    render: { kind: "sprite", code: "o" },
+    render: { kind: "sprite", code: "u" },
     movement: { anyEmptySquare: true },
     traits: { redeployable: true }
   };

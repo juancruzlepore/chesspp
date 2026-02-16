@@ -14,12 +14,14 @@
     "wr": { "x": 4, "y": 0, "name": "white-rook" },
     "wp": { "x": 5, "y": 0, "name": "white-pawn" },
     "wo": { "x": 6, "y": 0, "name": "white-overknight" },
+    "wu": { "x": 0, "y": 3, "name": "white-bureaucrat" },
     "bk": { "x": 0, "y": 1, "name": "black-king" },
     "bq": { "x": 1, "y": 1, "name": "black-queen" },
     "bb": { "x": 2, "y": 1, "name": "black-bishop" },
     "bn": { "x": 3, "y": 1, "name": "black-knight" },
     "br": { "x": 4, "y": 1, "name": "black-rook" },
     "bp": { "x": 5, "y": 1, "name": "black-pawn" },
-    "bo": { "x": 6, "y": 1, "name": "black-overknight" }
+    "bo": { "x": 6, "y": 1, "name": "black-overknight" },
+    "bu": { "x": 0, "y": 2, "name": "black-bureaucrat" }
   }
 }
