@@ -136,6 +136,14 @@ const PIECE_SETS = [
     layout: createBureaucratLayout()
   },
   {
+    id: "racing-pawns",
+    name: "Racing Pawns",
+    description: "Pawns may always advance one or two squares forward when unobstructed.",
+    promotionType: "q",
+    pieces: createRacingPawnPieceDefinitions(),
+    layout: createClassicLayout()
+  },
+  {
     id: "royal-pawns",
     name: "Royal Pawns",
     description: "Pawns can capture one square on any diagonal, forward or backward.",
@@ -202,7 +210,7 @@ function createClassicPieceDefinitions() {
     p: {
       name: "Pawn",
       render: { kind: "sprite", code: "p" },
-      movement: { pawn: true },
+      movement: { pawn: true, doubleStepFromStart: true },
       traits: { pawn: true }
     },
     n: {
@@ -271,6 +279,18 @@ function createBureaucratPieceDefinitions() {
     render: { kind: "sprite", code: "u" },
     movement: { anyEmptySquare: true },
     traits: { redeployable: true }
+  };
+  return pieces;
+}
+
+function createRacingPawnPieceDefinitions() {
+  const pieces = createClassicPieceDefinitions();
+  pieces.p = {
+    ...pieces.p,
+    movement: {
+      ...pieces.p.movement,
+      doubleStepFromAnyRow: true
+    }
   };
   return pieces;
 }
@@ -1198,6 +1218,16 @@ function getPawnStartRows(movement, color) {
   return color === "w" ? [6] : [1];
 }
 
+function canPawnDoubleStepFromRow(movement, color, row) {
+  if (movement.doubleStepFromAnyRow) {
+    return true;
+  }
+  if (movement.doubleStepFromStart === false) {
+    return false;
+  }
+  return getPawnStartRows(movement, color).includes(row);
+}
+
 function getPawnPromotionRows(movement, color) {
   if (Array.isArray(movement.promotionRows)) {
     return movement.promotionRows;
@@ -1313,7 +1343,6 @@ function generatePseudoMoves(square, state, options = {}) {
 
   if (movement.pawn) {
     const dir = getPawnDirection(movement, piece.color);
-    const startRows = getPawnStartRows(movement, piece.color);
     const promotionRows = new Set(getPawnPromotionRows(movement, piece.color));
     const captureDirections = getPawnCaptureDirections(movement, piece.color);
 
@@ -1333,7 +1362,7 @@ function generatePseudoMoves(square, state, options = {}) {
             addMove(oneStepSquare);
           }
 
-          if (startRows.includes(row)) {
+          if (canPawnDoubleStepFromRow(movement, piece.color, row)) {
             const twoStepRow = row + dir * 2;
             if (inBounds(twoStepRow, col)) {
               const twoStepSquare = indexFromRowCol(twoStepRow, col);

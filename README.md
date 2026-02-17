@@ -15,6 +15,7 @@ Client-side chess webapp for two players sharing one device.
 - Independent white/black piece-set selectors (default `classic`).
 - Included sample custom set: `overknight` (redesigned knight art + extra 3-square orthogonal jumps).
 - Included variant set: `bureaucrat` (adds a bureaucrat on `a3`/`h6` that can move to any empty square, cannot capture, and returns from reserve after being captured).
+- Included variant set: `racing-pawns` (all pawns may move either one or two squares forward on any move, as long as both path squares are clear for a two-step move).
 - Piece sets now define their own piece catalog, rendering, movement rules, and initial placements.
 - Supports adding new piece types (for example a 7th type) and placing them on arbitrary squares in the set layout.
 - Piece-set selectors lock after the first move or when the clock starts.
