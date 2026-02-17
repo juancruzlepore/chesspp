@@ -142,6 +142,14 @@ const PIECE_SETS = [
     promotionType: "q",
     pieces: createRacingPawnPieceDefinitions(),
     layout: createClassicLayout()
+  },
+  {
+    id: "royal-pawns",
+    name: "Royal Pawns",
+    description: "Pawns can capture one square on any diagonal, forward or backward.",
+    promotionType: "q",
+    pieces: createRoyalPawnsPieceDefinitions(),
+    layout: createClassicLayout()
   }
 ];
 
@@ -282,6 +290,23 @@ function createRacingPawnPieceDefinitions() {
     movement: {
       ...pieces.p.movement,
       doubleStepFromAnyRow: true
+    }
+  };
+  return pieces;
+}
+
+function createRoyalPawnsPieceDefinitions() {
+  const pieces = createClassicPieceDefinitions();
+  pieces.p = {
+    ...pieces.p,
+    movement: {
+      ...pieces.p.movement,
+      captureDirections: [
+        [-1, -1],
+        [-1, 1],
+        [1, -1],
+        [1, 1]
+      ]
     }
   };
   return pieces;
@@ -1213,6 +1238,21 @@ function getPawnPromotionRows(movement, color) {
   return color === "w" ? [0] : [7];
 }
 
+function getPawnCaptureDirections(movement, color) {
+  if (Array.isArray(movement.captureDirections)) {
+    return movement.captureDirections;
+  }
+  if (movement.captureDirections && Array.isArray(movement.captureDirections[color])) {
+    return movement.captureDirections[color];
+  }
+
+  const dir = getPawnDirection(movement, color);
+  return [
+    [dir, -1],
+    [dir, 1]
+  ];
+}
+
 function generatePseudoMoves(square, state, options = {}) {
   const { attacksOnly = false } = options;
   const piece = state.board[square];
@@ -1304,6 +1344,7 @@ function generatePseudoMoves(square, state, options = {}) {
   if (movement.pawn) {
     const dir = getPawnDirection(movement, piece.color);
     const promotionRows = new Set(getPawnPromotionRows(movement, piece.color));
+    const captureDirections = getPawnCaptureDirections(movement, piece.color);
 
     if (!attacksOnly) {
       const oneStepRow = row + dir;
@@ -1334,9 +1375,9 @@ function generatePseudoMoves(square, state, options = {}) {
       }
     }
 
-    for (const dc of [-1, 1]) {
-      const targetRow = row + dir;
-      const targetCol = col + dc;
+    for (const [captureDr, captureDc] of captureDirections) {
+      const targetRow = row + captureDr;
+      const targetCol = col + captureDc;
       if (!inBounds(targetRow, targetCol)) {
         continue;
       }
@@ -1362,7 +1403,7 @@ function generatePseudoMoves(square, state, options = {}) {
         continue;
       }
 
-      if (state.enPassant === to) {
+      if (captureDr === dir && state.enPassant === to) {
         const capturedSquare = indexFromRowCol(row, targetCol);
         const capturedPiece = state.board[capturedSquare];
         if (capturedPiece && capturedPiece.color !== piece.color && pieceHasTrait(capturedPiece, "pawn")) {
