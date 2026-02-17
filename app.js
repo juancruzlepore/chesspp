@@ -202,7 +202,7 @@ function createClassicPieceDefinitions() {
     p: {
       name: "Pawn",
       render: { kind: "sprite", code: "p" },
-      movement: { pawn: true },
+      movement: { pawn: true, doubleStepFromStart: true },
       traits: { pawn: true }
     },
     n: {
@@ -281,7 +281,7 @@ function createRacingPawnPieceDefinitions() {
     ...pieces.p,
     movement: {
       ...pieces.p.movement,
-      startRows: [0, 1, 2, 3, 4, 5, 6, 7]
+      doubleStepFromAnyRow: true
     }
   };
   return pieces;
@@ -1193,6 +1193,16 @@ function getPawnStartRows(movement, color) {
   return color === "w" ? [6] : [1];
 }
 
+function canPawnDoubleStepFromRow(movement, color, row) {
+  if (movement.doubleStepFromAnyRow) {
+    return true;
+  }
+  if (movement.doubleStepFromStart === false) {
+    return false;
+  }
+  return getPawnStartRows(movement, color).includes(row);
+}
+
 function getPawnPromotionRows(movement, color) {
   if (Array.isArray(movement.promotionRows)) {
     return movement.promotionRows;
@@ -1293,7 +1303,6 @@ function generatePseudoMoves(square, state, options = {}) {
 
   if (movement.pawn) {
     const dir = getPawnDirection(movement, piece.color);
-    const startRows = getPawnStartRows(movement, piece.color);
     const promotionRows = new Set(getPawnPromotionRows(movement, piece.color));
 
     if (!attacksOnly) {
@@ -1312,7 +1321,7 @@ function generatePseudoMoves(square, state, options = {}) {
             addMove(oneStepSquare);
           }
 
-          if (startRows.includes(row)) {
+          if (canPawnDoubleStepFromRow(movement, piece.color, row)) {
             const twoStepRow = row + dir * 2;
             if (inBounds(twoStepRow, col)) {
               const twoStepSquare = indexFromRowCol(twoStepRow, col);
